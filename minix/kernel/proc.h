@@ -29,7 +29,6 @@ struct proc {
 
   char p_priority;		/* current process priority */
   u64_t p_cpu_time_left;	/* time left to use the cpu */
-  int p_estimated_burst_time;   /* Tempo estimado de execução (para SJF) */
   unsigned p_quantum_size_ms;	/* assigned time quantum in ms
 				   FIXME remove this */
   struct proc *p_scheduler;	/* who should get out of quantum msg */
