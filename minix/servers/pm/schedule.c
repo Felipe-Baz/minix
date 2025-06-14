@@ -15,6 +15,21 @@
 #include "kernel/proc.h"
 
 /*===========================================================================*
+ *				SJF_scheduling				     *
+ *===========================================================================*/
+
+// Exemplo: função auxiliar para obter quantum baseado no estimated_burst_time
+static unsigned get_quantum(struct mproc *rmp)
+{
+    // Se você tiver um campo estimated_burst_time, usa ele; senão default USER_QUANTUM
+    if (rmp->estimated_burst_time > 0) {
+        return rmp->estimated_burst_time;
+    }
+    return USER_QUANTUM;
+}
+
+
+/*===========================================================================*
  *				init_scheduling				     *
  *===========================================================================*/
 void sched_init(void)
@@ -34,11 +49,14 @@ void sched_init(void)
 			assert(_ENDPOINT_P(trmp->mp_endpoint) == INIT_PROC_NR);
 			parent_e = mproc[trmp->mp_parent].mp_endpoint;
 			assert(parent_e == trmp->mp_endpoint);
+
+			unsigned quantum = get_quantum(trmp);
+			
 			s = sched_start(SCHED_PROC_NR,	/* scheduler_e */
 				trmp->mp_endpoint,	/* schedulee_e */
 				parent_e,		/* parent_e */
 				USER_Q, 		/* maxprio */
-				USER_QUANTUM, 		/* quantum */
+				quantum, 		/* quantum DINÂMICO */
 				-1,			/* don't change cpu */
 				&trmp->mp_scheduler);	/* *newsched_e */
 			if (s != OK) {
@@ -75,12 +93,17 @@ int sched_start_user(endpoint_t ep, struct mproc *rmp)
 		inherit_from = mproc[rmp->mp_parent].mp_endpoint;
 	}
 
-	/* inherit quantum */
-	return sched_inherit(ep, 			/* scheduler_e */
-		rmp->mp_endpoint, 			/* schedulee_e */
-		inherit_from, 				/* parent_e */
-		maxprio, 				/* maxprio */
-		&rmp->mp_scheduler);			/* *newsched_e */
+	quantum = get_quantum(rmp);
+
+        rv = sched_start(inherit_from,		/* scheduler_e */
+		rmp->mp_endpoint,			/* schedulee_e */
+	        inherit_from,				/* parent_e */
+	        maxprio,				/* maxprio */
+	        quantum,				/* quantum DINÂMICO */
+	        -1,					/* cpu */
+	        &rmp->mp_scheduler);			/* *newsched_e */
+
+	return rv;
 }
 
 /*===========================================================================*
