@@ -78,6 +78,7 @@ struct proc {
   sigset_t p_pending;		/* bit map for pending kernel signals */
 
   char p_name[PROC_NAME_LEN];	/* name of the process, including \0 */
+  struct proc *p_next_fcfs;   /* ponteiro para fila FCFS */
 
   endpoint_t p_endpoint;	/* endpoint number, generation-aware */
 
