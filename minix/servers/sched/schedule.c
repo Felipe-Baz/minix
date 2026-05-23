@@ -97,8 +97,10 @@ int do_noquantum(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
-	if (rmp->priority < MIN_USER_Q) {
-		rmp->priority += 1; /* lower priority */
+	/* RR: sem demotion; usuários permanecem na fila única USER_Q. */
+	if (!is_system_proc(rmp)) {
+		rmp->priority = RR_USER_PRIORITY;
+		rmp->max_priority = RR_USER_PRIORITY;
 	}
 
 	if ((rv = schedule_process_local(rmp)) != OK) {
