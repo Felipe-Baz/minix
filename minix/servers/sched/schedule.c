@@ -174,8 +174,8 @@ int do_start_scheduling(message *m_ptr)
 	if (rmp->endpoint == rmp->parent) {
 		/* We have a special case here for init, which is the first
 		   process scheduled, and the parent of itself. */
-		rmp->priority   = USER_Q;
-		rmp->time_slice = DEFAULT_USER_TIME_SLICE;
+		rmp->priority   = RR_USER_PRIORITY;
+		rmp->time_slice = RR_DEFAULT_QUANTUM_MS;
 
 		/*
 		 * Since kernel never changes the cpu of a process, all are
@@ -214,6 +214,12 @@ int do_start_scheduling(message *m_ptr)
 	default: 
 		/* not reachable */
 		assert(0);
+	}
+
+	/* RR: fila única para processos de usuário; serviços RS mantêm prioridade. */
+	if (!is_system_proc(rmp)) {
+		rmp->priority = RR_USER_PRIORITY;
+		rmp->max_priority = RR_USER_PRIORITY;
 	}
 
 	/* Take over scheduling the process. The kernel reply message populates
@@ -281,8 +287,13 @@ int do_nice(message *m_ptr)
 	old_q     = rmp->priority;
 	old_max_q = rmp->max_priority;
 
-	/* Update the proc entry and reschedule the process */
-	rmp->max_priority = rmp->priority = new_q;
+	/* RR: nice não altera fila de usuários; serviços RS seguem new_q. */
+	if (!is_system_proc(rmp)) {
+		rmp->priority = RR_USER_PRIORITY;
+		rmp->max_priority = RR_USER_PRIORITY;
+	} else {
+		rmp->max_priority = rmp->priority = new_q;
+	}
 
 	if ((rv = schedule_process_local(rmp)) != OK) {
 		/* Something went wrong when rescheduling the process, roll
