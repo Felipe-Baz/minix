@@ -353,19 +353,23 @@ void init_scheduling(void)
  * quantum. This function will find all proccesses that have been bumped down,
  * and pulls them back up. This default policy will soon be changed.
  */
+
+ /* RR: sem aging; apenas rearma o alarme periódico do relógio. */
 void balance_queues(void)
 {
-	struct schedproc *rmp;
-	int r, proc_nr;
+	// struct schedproc *rmp;
+	// int r, proc_nr;
 
-	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-		if (rmp->flags & IN_USE) {
-			if (rmp->priority > rmp->max_priority) {
-				rmp->priority -= 1; /* increase priority */
-				schedule_process_local(rmp);
-			}
-		}
-	}
+	// for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
+	// 	if (rmp->flags & IN_USE) {
+	// 		if (rmp->priority > rmp->max_priority) {
+	// 			rmp->priority -= 1; /* increase priority */
+	// 			schedule_process_local(rmp);
+	// 		}
+	// 	}
+	// }
+
+	int r;
 
 	if ((r = sys_setalarm(balance_timeout, 0)) != OK)
 		panic("sys_setalarm failed: %d", r);
