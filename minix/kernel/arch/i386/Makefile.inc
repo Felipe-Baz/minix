@@ -105,7 +105,7 @@ SRCS+= arch_watchdog.c
 CPPFLAGS+= -DUSE_WATCHDOG
 .endif
 
-klib.o mpx.o head.o: procoffsets.h
+apic_asm.o klib.o mpx.o head.o: procoffsets.h
 
 SRCS+= procoffsets.h
 
