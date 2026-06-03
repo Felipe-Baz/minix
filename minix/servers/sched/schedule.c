@@ -1,4 +1,9 @@
-/* This file contains the scheduling policy for SCHED
+/* Política de escalonamento do servidor SCHED (projeto SO - UNIFESP).
+ *
+ * LCFS (Last Come First Served): o processo mais recente executa primeiro.
+ * Quando um processo esgota seu quantum, vai direto para a fila de menor
+ * prioridade (MIN_USER_Q) e lá permanece — processos mais novos, que ainda
+ * estão em USER_Q, sempre o preemptam.
  *
  * The entry points are:
  *   do_noquantum:        Called on behalf of process' that run out of quantum
@@ -96,9 +101,10 @@ int do_noquantum(message *m_ptr)
 	}
 
 	rmp = &schedproc[proc_nr_n];
-	if (rmp->priority < MIN_USER_Q) {
-		rmp->priority += 1; /* lower priority */
-	}
+
+	/* LCFS: move o processo para a fila de menor prioridade.
+	 * Processos mais novos (ainda em USER_Q) irão preemptá-lo. */
+	rmp->priority = MIN_USER_Q;
 
 	if ((rv = schedule_process_local(rmp)) != OK) {
 		return rv;
@@ -345,25 +351,12 @@ void init_scheduling(void)
  *				balance_queues				     *
  *===========================================================================*/
 
-/* This function in called every N ticks to rebalance the queues. The current
- * scheduler bumps processes down one priority when ever they run out of
- * quantum. This function will find all proccesses that have been bumped down,
- * and pulls them back up. This default policy will soon be changed.
- */
 void balance_queues(void)
 {
-	struct schedproc *rmp;
-	int r, proc_nr;
+	int r;
 
-	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-		if (rmp->flags & IN_USE) {
-			if (rmp->priority > rmp->max_priority) {
-				rmp->priority -= 1; /* increase priority */
-				schedule_process_local(rmp);
-			}
-		}
-	}
-
+	/* LCFS: não restaura prioridades — processos antigos ficam em MIN_USER_Q.
+	 * Apenas renova o alarme periódico. */
 	if ((r = sys_setalarm(balance_timeout, 0)) != OK)
 		panic("sys_setalarm failed: %d", r);
 }
